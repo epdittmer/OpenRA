@@ -10,6 +10,7 @@
 #endregion
 
 using System;
+using System.Drawing;
 using OpenRA.Effects;
 using OpenRA.GameRules;
 using OpenRA.Mods.Common.Activities;
@@ -95,6 +96,7 @@ namespace OpenRA.Mods.Common.Traits
 	{
 		readonly NukePowerInfo info;
 		readonly BodyOrientation body;
+		private int Launches = 0;
 
 		public NukePower(Actor self, NukePowerInfo info)
 			: base(self, info)
@@ -105,6 +107,8 @@ namespace OpenRA.Mods.Common.Traits
 
 		public override void Activate(Actor self, Order order, SupportPowerManager manager)
 		{
+			Launches++;
+
 			base.Activate(self, order, manager);
 			PlayLaunchSounds();
 
@@ -117,7 +121,8 @@ namespace OpenRA.Mods.Common.Traits
 				self.CenterPosition + body.LocalToWorld(info.SpawnOffset),
 				targetPosition,
 				info.FlightVelocity, info.FlightDelay, info.SkipAscent,
-				info.FlashType);
+				info.FlashType,
+				Launches);
 
 			self.World.AddFrameEndTask(w => w.Add(new DelayedAction(info.MissileDelay, () => self.World.Add(missile))));
 

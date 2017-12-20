@@ -9,6 +9,7 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenRA.Effects;
@@ -34,13 +35,15 @@ namespace OpenRA.Mods.Common.Effects
 		readonly WPos descendTarget;
 		readonly int delay;
 		readonly int turn;
+		readonly int nukeLaunchCount;
 
 		WPos pos;
 		int ticks;
 		bool isAddedToScreenMap;
 
+
 		public NukeLaunch(Player firedBy, string name, WeaponInfo weapon, string weaponPalette, string upSequence, string downSequence,
-			WPos launchPos, WPos targetPos, WDist velocity, int delay, bool skipAscent, string flashType)
+			WPos launchPos, WPos targetPos, WDist velocity, int delay, bool skipAscent, string flashType, int nukeLaunchCount)
 		{
 			this.firedBy = firedBy;
 			this.weapon = weapon;
@@ -49,6 +52,7 @@ namespace OpenRA.Mods.Common.Effects
 			this.delay = delay;
 			turn = delay / 2;
 			this.flashType = flashType;
+			this.nukeLaunchCount = nukeLaunchCount;
 
 			var offset = new WVec(WDist.Zero, WDist.Zero, velocity * turn);
 			ascendSource = launchPos;
@@ -96,7 +100,15 @@ namespace OpenRA.Mods.Common.Effects
 		void Explode(World world)
 		{
 			world.AddFrameEndTask(w => { w.Remove(this); w.ScreenMap.Remove(this); });
-			weapon.Impact(Target.FromPos(pos), firedBy.PlayerActor, Enumerable.Empty<int>());
+
+			IEnumerable<int> damageModifiers = Enumerable.Empty<int>();
+			int p = Math.Min(25 * nukeLaunchCount, 100);
+			if (p < 100)
+			{
+				damageModifiers = damageModifiers.Append(p);
+			}
+
+			weapon.Impact(Target.FromPos(pos), firedBy.PlayerActor, damageModifiers);
 			world.WorldActor.Trait<ScreenShaker>().AddEffect(20, pos, 5);
 
 			foreach (var flash in world.WorldActor.TraitsImplementing<FlashPaletteEffect>())
