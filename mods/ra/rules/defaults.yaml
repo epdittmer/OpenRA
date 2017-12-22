@@ -606,6 +606,7 @@
 		Weapon: BuildingExplode
 		EmptyWeapon: BuildingExplode
 	CaptureNotification:
+	Chronoshiftable:
 	ShakeOnDeath:
 	ProximityCaptor:
 		Types: Building

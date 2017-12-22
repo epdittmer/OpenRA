@@ -1,4 +1,5 @@
 #region Copyright & License Information
+
 /*
  * Copyright 2007-2017 The OpenRA Developers (see AUTHORS)
  * This file is part of OpenRA, which is free software. It is made
@@ -7,6 +8,7 @@
  * the License, or (at your option) any later version. For more
  * information, see COPYING.
  */
+
 #endregion
 
 using System;
@@ -33,21 +35,18 @@ namespace OpenRA.Mods.Common.Traits
 		public readonly HashSet<string> TerrainTypes = new HashSet<string>();
 
 		[Desc("x means cell is blocked, capital X means blocked but not counting as targetable, ",
-			"= means part of the footprint but passable, _ means completely empty.")]
-		[FieldLoader.LoadUsing("LoadFootprint")]
+			"= means part of the footprint but passable, _ means completely empty.")] [FieldLoader.LoadUsing("LoadFootprint")]
 		public readonly Dictionary<CVec, FootprintCellType> Footprint;
 
 		public readonly CVec Dimensions = new CVec(1, 1);
 
-		[Desc("Shift center of the actor by this offset.")]
-		public readonly WVec LocalCenterOffset = WVec.Zero;
+		[Desc("Shift center of the actor by this offset.")] public readonly WVec LocalCenterOffset = WVec.Zero;
 
 		public readonly bool RequiresBaseProvider = false;
 
 		public readonly bool AllowInvalidPlacement = false;
 
-		[Desc("Clear smudges from underneath the building footprint.")]
-		public readonly bool RemoveSmudgesOnBuild = true;
+		[Desc("Clear smudges from underneath the building footprint.")] public readonly bool RemoveSmudgesOnBuild = true;
 
 		[Desc("Clear smudges from underneath the building footprint on sell.")]
 		public readonly bool RemoveSmudgesOnSell = true;
@@ -55,19 +54,26 @@ namespace OpenRA.Mods.Common.Traits
 		[Desc("Clear smudges from underneath the building footprint on transform.")]
 		public readonly bool RemoveSmudgesOnTransform = true;
 
-		public readonly string[] BuildSounds = { "placbldg.aud", "build5.aud" };
+		public readonly string[] BuildSounds = {"placbldg.aud", "build5.aud"};
 
-		public readonly string[] UndeploySounds = { "cashturn.aud" };
+		public readonly string[] UndeploySounds = {"cashturn.aud"};
 
-		public virtual object Create(ActorInitializer init) { return new Building(init, this); }
+		public virtual object Create(ActorInitializer init)
+		{
+			return new Building(init, this);
+		}
 
 		protected static object LoadFootprint(MiniYaml yaml)
 		{
 			var footprintYaml = yaml.Nodes.FirstOrDefault(n => n.Key == "Footprint");
-			var footprintChars = footprintYaml != null ? footprintYaml.Value.Value.Where(x => !char.IsWhiteSpace(x)).ToArray() : new[] { 'x' };
+			var footprintChars = footprintYaml != null
+				? footprintYaml.Value.Value.Where(x => !char.IsWhiteSpace(x)).ToArray()
+				: new[] {'x'};
 
 			var dimensionsYaml = yaml.Nodes.FirstOrDefault(n => n.Key == "Dimensions");
-			var dim = dimensionsYaml != null ? FieldLoader.GetValue<CVec>("Dimensions", dimensionsYaml.Value.Value) : new CVec(1, 1);
+			var dim = dimensionsYaml != null
+				? FieldLoader.GetValue<CVec>("Dimensions", dimensionsYaml.Value.Value)
+				: new CVec(1, 1);
 
 			if (footprintChars.Length != dim.X * dim.Y)
 			{
@@ -83,10 +89,10 @@ namespace OpenRA.Mods.Common.Traits
 				for (var x = 0; x < dim.X; x++)
 				{
 					var c = footprintChars[index++];
-					if (!Enum.IsDefined(typeof(FootprintCellType), (FootprintCellType)c))
+					if (!Enum.IsDefined(typeof(FootprintCellType), (FootprintCellType) c))
 						throw new YamlException("Invalid footprint cell type '{0}'".F(c));
 
-					ret[new CVec(x, y)] = (FootprintCellType)c;
+					ret[new CVec(x, y)] = (FootprintCellType) c;
 				}
 			}
 
@@ -205,14 +211,16 @@ namespace OpenRA.Mods.Common.Traits
 					if (buildingAtPos == null)
 					{
 						var unitsAtPos = world.ActorMap.GetActorsAt(pos).Where(a => a.IsInWorld
-							&& (a.Owner == p || (allyBuildEnabled && a.Owner.Stances[p] == Stance.Ally))
-							&& ActorGrantsValidArea(a, requiresBuildableArea));
+						                                                            && (a.Owner == p ||
+						                                                                (allyBuildEnabled &&
+						                                                                 a.Owner.Stances[p] == Stance.Ally))
+						                                                            && ActorGrantsValidArea(a, requiresBuildableArea));
 
 						if (unitsAtPos.Any())
 							nearnessCandidates.Add(pos);
 					}
 					else if (buildingAtPos.IsInWorld && ActorGrantsValidArea(buildingAtPos, requiresBuildableArea)
-						&& (buildingAtPos.Owner == p || (allyBuildEnabled && buildingAtPos.Owner.Stances[p] == Stance.Ally)))
+					         && (buildingAtPos.Owner == p || (allyBuildEnabled && buildingAtPos.Owner.Stances[p] == Stance.Ally)))
 						nearnessCandidates.Add(pos);
 				}
 			}
@@ -221,7 +229,7 @@ namespace OpenRA.Mods.Common.Traits
 			return nearnessCandidates
 				.Any(a => buildingTiles
 					.Any(b => Math.Abs(a.X - b.X) <= adjacent
-						&& Math.Abs(a.Y - b.Y) <= adjacent));
+					          && Math.Abs(a.Y - b.Y) <= adjacent));
 		}
 
 		public IReadOnlyDictionary<CPos, SubCell> OccupiedCells(ActorInfo info, CPos topLeft, SubCell subCell = SubCell.Any)
@@ -232,7 +240,10 @@ namespace OpenRA.Mods.Common.Traits
 			return new ReadOnlyDictionary<CPos, SubCell>(occupied);
 		}
 
-		bool IOccupySpaceInfo.SharesCell { get { return false; } }
+		bool IOccupySpaceInfo.SharesCell
+		{
+			get { return false; }
+		}
 
 		public IEnumerable<IRenderable> Render(WorldRenderer wr, World w, ActorInfo ai, WPos centerPosition)
 		{
@@ -243,14 +254,13 @@ namespace OpenRA.Mods.Common.Traits
 		}
 	}
 
-	public class Building : IOccupySpace, ITargetableCells, INotifySold, INotifyTransform, ISync, INotifyCreated,
+	public class Building : IPositionable, ITargetableCells, INotifySold, INotifyTransform, ISync, INotifyCreated,
 		INotifyAddedToWorld, INotifyRemovedFromWorld, INotifyDemolition
 	{
 		public readonly bool SkipMakeAnimation;
 		public readonly BuildingInfo Info;
 		public bool BuildComplete { get; private set; }
 
-		[Sync] readonly CPos topLeft;
 		readonly Actor self;
 		readonly BuildingInfluence influence;
 
@@ -269,15 +279,19 @@ namespace OpenRA.Mods.Common.Traits
 			return true;
 		}
 
-		public void Unlock() { Locked = false; }
+		public void Unlock()
+		{
+			Locked = false;
+		}
 
-		public CPos TopLeft { get { return topLeft; } }
+		public CPos TopLeft { get; private set; }
+
 		public WPos CenterPosition { get; private set; }
 
 		public Building(ActorInitializer init, BuildingInfo info)
 		{
 			self = init.Self;
-			topLeft = init.Get<LocationInit, CPos>();
+			TopLeft = init.Get<LocationInit, CPos>();
 			Info = info;
 			influence = self.World.WorldActor.Trait<BuildingInfluence>();
 
@@ -287,13 +301,19 @@ namespace OpenRA.Mods.Common.Traits
 			targetableCells = Info.FootprintTiles(TopLeft, FootprintCellType.Occupied)
 				.Select(c => Pair.New(c, SubCell.FullCell)).ToArray();
 
-			CenterPosition = init.World.Map.CenterOfCell(topLeft) + Info.CenterOffset(init.World);
+			CenterPosition = init.World.Map.CenterOfCell(TopLeft) + Info.CenterOffset(init.World);
 			SkipMakeAnimation = init.Contains<SkipMakeAnimsInit>();
 		}
 
-		public Pair<CPos, SubCell>[] OccupiedCells() { return occupiedCells; }
+		public Pair<CPos, SubCell>[] OccupiedCells()
+		{
+			return occupiedCells;
+		}
 
-		Pair<CPos, SubCell>[] ITargetableCells.TargetableCells() { return targetableCells; }
+		Pair<CPos, SubCell>[] ITargetableCells.TargetableCells()
+		{
+			return targetableCells;
+		}
 
 		void INotifyCreated.Created(Actor self)
 		{
@@ -346,7 +366,9 @@ namespace OpenRA.Mods.Common.Traits
 			BuildComplete = false;
 		}
 
-		void INotifySold.Sold(Actor self) { }
+		void INotifySold.Sold(Actor self)
+		{
+		}
 
 		void INotifyTransform.BeforeTransform(Actor self)
 		{
@@ -357,16 +379,63 @@ namespace OpenRA.Mods.Common.Traits
 				Game.Sound.PlayToPlayer(SoundType.World, self.Owner, s, self.CenterPosition);
 		}
 
-		void INotifyTransform.OnTransform(Actor self) { }
-		void INotifyTransform.AfterTransform(Actor self) { }
+		void INotifyTransform.OnTransform(Actor self)
+		{
+		}
+
+		void INotifyTransform.AfterTransform(Actor self)
+		{
+		}
 
 		public void RemoveSmudges()
 		{
 			var smudgeLayers = self.World.WorldActor.TraitsImplementing<SmudgeLayer>();
 
 			foreach (var smudgeLayer in smudgeLayers)
-				foreach (var footprintTile in Info.Tiles(self.Location))
-					smudgeLayer.RemoveSmudge(footprintTile);
+			foreach (var footprintTile in Info.Tiles(self.Location))
+				smudgeLayer.RemoveSmudge(footprintTile);
+		}
+
+		public bool IsLeavingCell(CPos location, SubCell subCell = SubCell.Any)
+		{
+			return false;
+		}
+
+		public bool CanEnterCell(CPos location, Actor ignoreActor = null, bool checkTransientActors = true)
+		{
+			return true;
+		}
+
+		public SubCell GetValidSubCell(SubCell preferred = SubCell.Any)
+		{
+			return SubCell.Any;
+		}
+
+		public SubCell GetAvailableSubCell(CPos location, SubCell preferredSubCell = SubCell.Any, Actor ignoreActor = null,
+			bool checkTransientActors = true)
+		{
+			return SubCell.Any;
+		}
+
+		public void SetPosition(Actor self, CPos cell, SubCell subCell = SubCell.Any)
+		{
+			SetPosition(self, self.World.Map.CenterOfCell(cell));
+		}
+
+		public void SetPosition(Actor self, WPos pos)
+		{
+			self.World.ActorMap.RemoveInfluence(self, this);
+			CenterPosition = pos;
+			TopLeft = self.World.Map.CellContaining(pos);
+			self.World.ActorMap.AddInfluence(self, this);
+
+			self.World.UpdateMaps(self, this);
+		}
+
+		public void SetVisualPosition(Actor self, WPos pos)
+		{
+			CenterPosition = pos;
+			self.World.ScreenMap.AddOrUpdate(self);
 		}
 	}
 }
